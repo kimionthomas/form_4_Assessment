@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Quest: Information Technology Assessment Prep</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #1e40af;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --success: #16a34a;
+            --error: #dc2626;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #game-container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .question-box h2 {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        button {
+            padding: 15px 25px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.05rem;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .correct {
+            background-color: var(--success) !important;
+            color: white;
+            border-color: var(--success);
+        }
+
+        .wrong {
+            background-color: var(--error) !important;
+            color: white;
+            border-color: var(--error);
+        }
+
+        #next-btn, #restart-btn {
+            margin-top: 30px;
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            text-align: center;
+            display: none;
+            font-weight: bold;
+            border: none;
+        }
+
+        #next-btn:hover {
+            background: var(--secondary);
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <h1>Information Technology</h1>
+        <h3>Assessment</h3>
+    </div>
+
+    <div id="game-ui">
+        <div class="stats">
+            <span>Quest: <span id="q-num">1</span>/60</span>
+            <span>Accuracy: <span id="score">0</span></span>
+        </div>
+
+        <div class="question-box">
+            <h2 id="question-text">Loading question...</h2>
+            <div id="options-container" class="options"></div>
+        </div>
+
+        <button id="next-btn">Next Objective</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2 style="text-align:center">Assessment Complete!</h2>
+        <div style="font-size: 1.5rem; text-align: center; margin: 20px 0;">
+            Final Score: <span id="final-score"></span>/60
+        </div>
+        <p id="grade-message" style="text-align: center; font-weight: bold;"></p>
+        <button id="restart-btn" style="display: block;">Attempt Again</button>
+    </div>
+</div>
+
+<script>
+    const examData = [
+        { q: "Which of the following is considered a peripheral device?", a: ["Central Processing Unit", "Random Access Memory", "Motherboard", "Microphone"], c: 3 },
+        { q: "How is a microphone typically used in the music industry?", a: ["To print musical scores", "To browse the internet for lyrics", "To record vocals or live instruments into a DAW", "To compile programming code for audio plugins"], c: 2 },
+        { q: "What is a common use for a keyboard during the music editing process?", a: ["To heat sensitive paper", "To strike ink-soaked ribbons", "To provide a physical link to a webpage", "To use shortcut keys or name audio files"], c: 3 },
+        { q: "Into which two broad categories are printers generally classified?", a: ["Impact and Non-Impact", "Input and Output", "Manual and Automatic", "Digital and Analog"], c: 0 },
+        { q: "Which statement correctly describes a Dot Matrix printer?", a: ["It uses heat-sensitive paper to create images.", "It uses a laser to melt toner onto the page.", "It uses a print head to strike an ink-soaked ribbon.", "It sprays tiny droplets of liquid ink."], c: 2 },
+        { q: "How does a thermal printer produce an image?", a: ["By striking a ribbon with metal pins", "By using heat on specially treated paper", "By using high-speed laser beams", "By merging documents from a database"], c: 1 },
+        { q: "Which is a primary reason to choose a laser printer over an inkjet printer for professional use?", a: ["Slower printing speed", "Cheaper upfront hardware cost", "Ability to use heat-sensitive paper", "Higher precision and sharper text quality"], c: 3 },
+        { q: "In terms of high-volume printing, why are laser printers considered cost-efficient?", a: ["The toner has a lower cost-per-page over time.", "The ink cartridges are cheaper to replace.", "They do not require electricity to run.", "They use less paper than inkjet printers."], c: 0 },
+        { q: "What is 'Verification' in the context of data integrity?", a: ["Checking if data is sensible and within limits", "Calculating the word count of a document", "Formatting data to fit a specific pattern", "Checking that data was copied accurately between media"], c: 3 },
+        { q: "Which process ensures that entered data is sensible and within reasonable limits?", a: ["Verification", "Transposition", "Transcription", "Validation"], c: 3 },
+        { q: "Which of the following is an example of a transposition error?", a: ["Entering 'ABC' instead of '123'", "Typing '34' instead of '43'", "Leaving a required field blank", "Entering a price of -5.00"], c: 1 },
+        { q: "Which validation check ensures a value falls between 0 and 100?", a: ["Presence check", "Data type check", "Range check", "Format check"], c: 2 },
+        { q: "If a system rejects a letter in a 'Price' field, which validation check is being used?", a: ["Range check", "Data type check", "Presence check", "Consistency check"], c: 1 },
+        { q: "What is the purpose of a 'Presence check'?", a: ["To verify the length of the data", "To ensure the data is spelled correctly", "To check if the data exists in a database", "To ensure a field is not left blank"], c: 3 },
+        { q: "How does a 'Double data entry' check work?", a: ["One person enters data twice on two different days.", "Data is entered twice and the computer compares both entries.", "The computer checks the data against a backup disk.", "The user must enter a password and a PIN."], c: 1 },
+        { q: "Checking if a person's Age matches their Date of Birth is an example of a:", a: ["Length check", "Consistency check", "Format check", "Presence check"], c: 1 },
+        { q: "Which check ensures a National Insurance number follows a specific pattern of letters and numbers?", a: ["Presence check", "Range check", "Format check", "Double entry check"], c: 2 },
+        { q: "A system that limits a password to exactly 8 characters is using a:", a: ["Data type check", "Consistency check", "Length check", "Format check"], c: 2 },
+        { q: "In a Word Processor, where can Jane quickly find the word count tool?", a: ["The 'Insert' tab", "The 'File' menu", "The 'Design' tab", "The 'Review' tab"], c: 3 },
+        { q: "What does HTML stand for in the context of web technology?", a: ["Hypertext Mail Language", "Hypertext Markup Language", "High Tech Multi Links", "Hyperlink Management Language"], c: 1 },
+        { q: "What is the function of a Hyperlink?", a: ["To format text in bold", "To open a file or application when clicked", "To create a database template", "To check the spelling of a webpage"], c: 1 },
+        { q: "Which tool is used to create multiple personalized documents from a single template?", a: ["Mail merge", "HTML", "Validation", "GUI"], c: 0 },
+        { q: "A program used to view information on the World Wide Web is called a:", a: ["Webpage", "Protocol", "Web browser", "Hyperlink"], c: 2 },
+        { q: "In the URL 'https://www.cxc.org/results', what does 'https' represent?", a: ["The domain name", "The file path", "The server address", "The protocol"], c: 3 },
+        { q: "In the URL 'https://www.cxc.org/results', 'www.cxc.org' is the:", a: ["Domain name", "Protocol", "Path", "Filename"], c: 0 },
+        { q: "What part of the URL 'https://www.cxc.org/results' indicates the specific resource on the server?", a: ["https", "www", "results", ".org"], c: 2 },
+        { q: "What is the primary difference between hardware and software?", a: ["Hardware is digital; software is physical.", "Software is only used for the internet; hardware is not.", "Hardware refers to physical parts; software refers to programs.", "There is no difference; they are the same."], c: 2 },
+        { q: "If a printer fails to print despite being plugged in, what is a likely software-related cause?", a: ["The printer driver is corrupted.", "The paper is too thick.", "The power cable is loose.", "The ink ribbon is dry."], c: 0 },
+        { q: "Why is a Graphical User Interface (GUI) considered easier for beginners than a Command Line Interface (CLI)?", a: ["It requires memorizing complex text commands.", "It uses less memory than a CLI.", "It uses intuitive icons and menus.", "It does not allow the use of a mouse."], c: 2 },
+        { q: "Which feature of a GUI allows a user to interact with multiple applications at once?", a: ["Command entry", "Data type validation", "Syntax error correction", "Multitasking in windows"], c: 3 },
+        { q: "What is a 'Syntax error' in programming?", a: ["An error in the sequence of characters required by the language", "A physical break in the computer hardware", "An error in the mathematical logic of the program", "A virus that deletes audio files"], c: 0 },
+        { q: "What would be the most appropriate data type for a variable named 'FirstName'?", a: ["Integer", "Float", "String", "Boolean"], c: 2 },
+        { q: "Which data type is best for storing an 'ItemPrice' like 19.99?", a: ["Boolean", "Character", "Integer", "Float"], c: 3 },
+        { q: "The variable 'Instock' can only be True or False. What is its data type?", a: ["String", "Integer", "Boolean", "Float"], c: 2 },
+        { q: "A 'Receipt_Number' that does not require calculations should ideally be stored as:", a: ["Integer or String", "Float", "Boolean", "Decimal"], c: 0 },
+        { q: "Which of these is a Non-Impact printer?", a: ["Dot Matrix", "Daisy Wheel", "Typewriter", "Inkjet"], c: 3 },
+        { q: "In the music industry, 'DAW' stands for:", a: ["Direct Audio Wave", "Data Access Web", "Digital Analog Wire", "Digital Audio Workstation"], c: 3 },
+        { q: "Verification is often performed by:", a: ["A human visually checking data against a source", "The computer's range check algorithm", "The HTML protocol", "Setting a character length limit"], c: 0 },
+        { q: "If you enter 'John' into a 'Date' field, which validation check will likely fail?", a: ["Data type check", "Presence check", "Length check", "Double entry check"], c: 0 },
+        { q: "Which software component is required for the OS to communicate with a specific printer?", a: ["Printer driver", "Web browser", "HTML code", "GUI icon"], c: 0 },
+        { q: "Which of these is NOT a validation check?", a: ["Range check", "Double data entry", "Length check", "Format check"], c: 1 },
+        { q: "What identifies a single document on the internet?", a: ["Driver", "Web browser", "Mail merge", "Webpage"], c: 3 },
+        { q: "The status bar at the bottom of a word processor window can often show:", a: ["The IP address", "The domain name", "The syntax error", "The word count"], c: 3 },
+        { q: "Which of the following is a hardware component?", a: ["Windows 11", "Hard Drive", "HTML", "Web Browser"], c: 1 },
+        { q: "Which of the following is a software component?", a: ["Monitor", "Mouse", "Keyboard", "Windows 11"], c: 3 },
+        { q: "What is the main drawback of a thermal printer?", a: ["It is too fast.", "It uses expensive toner.", "It is an impact printer.", "It requires specialized, heat-sensitive paper."], c: 3 },
+        { q: "What does a 'Format Check' look for?", a: ["Whether the data follows a specific pattern (e.g. LLNNN)", "Whether a number is between 1 and 10", "Whether the field is empty", "Whether the data was copied correctly"], c: 0 },
+        { q: "Why might a laser printer be better for professional documents?", a: ["It prints in low resolution.", "It uses ink ribbons.", "It is slower and more careful.", "It produces sharp, high-quality text."], c: 3 },
+        { q: "Which data type would store the number 500 without a decimal?", a: ["Float", "String", "Integer", "Boolean"], c: 2 },
+        { q: "Which of the following is a characteristic of a CLI?", a: ["Uses icons and a mouse", "Is intended only for music editing", "Always has a colorful wallpaper", "Requires typing text commands"], c: 3 },
+        { q: "Which term refers to using data for purposes other than those for which it was originally collected or for illegal access?", a: ["Identity Theft", "Data Integrity", "Phishing", "Information Misuse"], c: 3 },
+        { q: "Which method involves sending deceptive emails to trick users into providing private information?", a: ["Function Creep", "Encryption", "Cookies", "Phishing"], c: 3 },
+        { q: "In the context of banking, what type of issue is inaccurate data considered to be?", a: ["Data Integrity", "Information Misuse", "Identity Theft", "Secondary Use"], c: 0 },
+        { q: "What is the term for the secondary use of information beyond its original intended purpose?", a: ["Phishing", "Encryption", "Function Creep", "Data Tapping"], c: 2 },
+        { q: "Which technology is specifically used to prevent unauthorized 'tapping' or interception of information?", a: ["Cookies", "Phishing", "Encryption", "Data Integrity"], c: 2 },
+        { q: "What are the small text files stored on a computer that track user activity called?", a: ["Cookies", "Encryption keys", "Phishing mails", "Function files"], c: 0 },
+        { q: "The fraudulent practice of using another person's name and personal info to obtain credit is known as:", a: ["Function Creep", "Identity Theft", "Unauthorized Collection", "Data Tapping"], c: 1 },
+        { q: "Phishing is primarily categorized as which type of security threat?", a: ["Encryption failure", "Data Integrity error", "Unauthorized Collection", "Function Creep"], c: 2 },
+        { q: "Accessing data illegally is a key component of which of the following?", a: ["Information Misuse", "Cookies", "Function Creep", "Data Integrity"], c: 0 },
+        { q: "When data collected for one task is later used for a secondary, unrelated task, this is called:", a: ["Identity Theft", "Phishing", "Encryption", "Function Creep"], c: 3 }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const nextBtn = document.getElementById('next-btn');
+    const qNumDisplay = document.getElementById('q-num');
+    const scoreDisplay = document.getElementById('score');
+    const resultScreen = document.getElementById('result-screen');
+    const gameUI = document.getElementById('game-ui');
+
+    function loadQuestion() {
+        answered = false;
+        const data = examData[currentQuestion];
+        questionText.innerText = data.q;
+        qNumDisplay.innerText = currentQuestion + 1;
+        optionsContainer.innerHTML = '';
+        nextBtn.style.display = 'none';
+
+        data.a.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = option;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(index, btn) {
+        if (answered) return;
+        answered = true;
+        const correct = examData[currentQuestion].c;
+        const allButtons = optionsContainer.getElementsByTagName('button');
+
+        if (index === correct) {
+            score++;
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            allButtons[correct].classList.add('correct');
+        }
+
+        for (let b of allButtons) b.disabled = true;
+
+        scoreDisplay.innerText = score;
+        nextBtn.style.display = 'block';
+        if (currentQuestion === examData.length - 1) {
+            nextBtn.innerText = "Final Submission";
+        }
+    }
+
+    nextBtn.onclick = () => {
+        currentQuestion++;
+        if (currentQuestion < examData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    };
+
+    function showResults() {
+        gameUI.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        document.getElementById('final-score').innerText = score;
+        
+        const message = document.getElementById('grade-message');
+        if (score >= 48) message.innerText = "Distinction! You are ready for the exam.";
+        else if (score >= 36) message.innerText = "Good Job! A solid pass.";
+        else message.innerText = "Keep studying! Review the course material.";
+    }
+
+    document.getElementById('restart-btn').onclick = () => location.reload();
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
